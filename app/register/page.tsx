@@ -58,7 +58,7 @@ const Register = () => {
                 <button type='submit'>Go</button>
             </form>
             {message && (
-                <div style={{ color: isError ? 'red' : 'green', marginTop: '10px' }}>
+                <div /* style={{ color: isError ? 'red' : 'green', marginTop: '10px' }} */>
                     {message}
                 </div>
             )}

@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter} from "next/navigation"
 
@@ -7,6 +7,8 @@ import { useRouter} from "next/navigation"
 const Login = () => {
   const session = useSession();
   const router = useRouter();
+  const [message, setMessage] = useState<string | null>(null);
+
 
   useEffect(() => {
   if (session?.status === 'authenticated') {
@@ -29,8 +31,13 @@ const Login = () => {
 
 
       if (res?.error) { console.log(res.error)
-        if (res?.url) router.push("/dashboard")
+        setMessage("Invalid credentials");
+        if (res?.url) { setTimeout(() => {
+          router.push("/dashboard"); 
+      }, 2000);
+          
        }
+      }
   }
 
 
@@ -42,6 +49,11 @@ const Login = () => {
           <input type='password' placeholder='password' required></input>
           <button type='submit'>Go</button>
       </form>
+      {message && (
+                <div>
+                    {message}
+                </div>
+            )}
       </div>
       </div>
     )
