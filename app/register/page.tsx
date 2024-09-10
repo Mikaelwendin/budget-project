@@ -19,7 +19,6 @@ const Register = () => {
         const email = e.target[0].value;
         const password = e.target[1].value;
 
-        // Email and password validation
         if (!validateEmail(email)) {
             setIsError(true);
             setMessage("Please enter a valid email.");
