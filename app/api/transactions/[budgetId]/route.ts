@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+/* import { NextApiRequest, NextApiResponse } from 'next';
 import { getSession } from 'next-auth/react';
 import dbConnect from '../../../utils/db';
 import Expense from '../../../models/Expense';
@@ -36,5 +36,5 @@ const getTransactions = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
-export default getTransactions;
+export default getTransactions; */
 

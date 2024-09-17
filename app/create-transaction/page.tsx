@@ -8,22 +8,22 @@ const CreateTransaction = () => {
   const [description, setDescription] = useState('');
   const [budgetId, setBudgetId] = useState('');
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     try {
-      const response = await fetch('/api/transactions/create', {
+      const response = await fetch('/api/transactions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ type, category, amount, description, budgetId }),
+        body: JSON.stringify({ type, category, amount: parseFloat(amount), description, userId: "665efecf28b7ec89ba115f67", budgetId }),
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         console.log('Transaction created:', data);
-     
         setType('expense');
         setCategory('');
         setAmount('');
@@ -36,6 +36,7 @@ const CreateTransaction = () => {
       console.error('Error creating transaction:', error);
     }
   };
+  
 
   return (
     <div>
