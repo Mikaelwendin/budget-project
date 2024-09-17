@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getSession } from 'next-auth/react';
 import dbConnect from '../../../utils/db';
-import Budget from '../../../models/Budget';
 import User from '../../../models/User';
 
 const getTotalBudget = async (req: NextApiRequest, res: NextApiResponse) => {

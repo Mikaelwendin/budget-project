@@ -1,24 +1,25 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { getSession } from 'next-auth/react';
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import dbConnect from '../../../utils/db';
-import Budget from '../../../models/Budget';
-import User from '../../../models/User';
 import { Types } from 'mongoose';
+import { authOptions } from '../../auth/[...nextauth]/route'; 
+import User from '@/app/models/User';
+import Budget from '@/app/models/Budget';
 
-const createBudget = async (req: NextApiRequest, res: NextApiResponse) => {
-  const session = await getSession({ req });
+export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
   if (!session) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   await dbConnect();
 
-  const { name, amount } = req.body;
+  const { name, amount } = await request.json();
 
   try {
     const user = await User.findOne({ email: session.user?.email });
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const budget = new Budget({
@@ -32,11 +33,9 @@ const createBudget = async (req: NextApiRequest, res: NextApiResponse) => {
     user.budgets.push(budget._id as Types.ObjectId);
     await user.save();
 
-    res.status(201).json(budget);
+    return NextResponse.json(budget, { status: 201 });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-};
-
-export default createBudget;
+}
 

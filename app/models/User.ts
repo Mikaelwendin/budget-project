@@ -1,10 +1,12 @@
 import mongoose, { Document, Schema, Model, Types } from 'mongoose';
 
 interface IUser extends Document {
+  _id: Types.ObjectId;
   email: string;
   password: string;
   budgets: Types.ObjectId[];
 }
+
 
 const userSchema: Schema<IUser> = new Schema({
   email: { type: String, required: true, unique: true },
