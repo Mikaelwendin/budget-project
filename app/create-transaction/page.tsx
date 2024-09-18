@@ -18,7 +18,7 @@ const CreateTransaction = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ type, category, amount: parseFloat(amount), description, userId: "665efecf28b7ec89ba115f67", budgetId }),
+        body: JSON.stringify({ type, category, amount: parseFloat(amount), description, budgetId }),
       });
   
       if (response.ok) {
@@ -36,6 +36,7 @@ const CreateTransaction = () => {
       console.error('Error creating transaction:', error);
     }
   };
+  
   
 
   return (

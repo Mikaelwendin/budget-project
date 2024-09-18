@@ -1,39 +1,56 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import dbConnect from '../../utils/db';
-import { authOptions } from '../auth/[...nextauth]/route'; 
+import { authOptions } from '../auth/[...nextauth]/route';
 import Expense from '@/app/models/Expense';
 import Income from '@/app/models/Income';
+import Budget from '@/app/models/Budget';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  if (!session || !session.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   await dbConnect();
 
-  const { type, category, amount, description, userId, budgetId } = await request.json();
+  const { type, category, amount, description, budgetId } = await request.json();
 
   try {
+    const userId = session.user.id;
+
+    let transaction;
+
     if (type === 'expense') {
-      const expense = new Expense({
+      
+      transaction = new Expense({
         user: userId,
         budget: budgetId,
         category,
         amount,
         description,
       });
-      await expense.save();
+      await transaction.save();
+
+      
+      await Budget.findByIdAndUpdate(budgetId, {
+        $push: { expenses: transaction._id },
+      });
     } else if (type === 'income') {
-      const income = new Income({
+      
+      transaction = new Income({
         user: userId,
         budget: budgetId,
         source: category,
         amount,
         description,
       });
-      await income.save();
+      await transaction.save();
+
+      
+      await Budget.findByIdAndUpdate(budgetId, {
+        $push: { incomes: transaction._id },
+      });
     }
 
     return NextResponse.json({ message: 'Transaction added successfully' }, { status: 201 });
