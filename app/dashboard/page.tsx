@@ -1,63 +1,71 @@
+
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const Dashboard = () => {
-  const { data: session, status } = useSession();
+  const session = useSession();
   const router = useRouter();
   const [budgets, setBudgets] = useState<any[]>([]);
   const [selectedBudget, setSelectedBudget] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log("Session status:", session?.status);
     const fetchBudgets = async () => {
-      if (status === 'authenticated') {
-        try {
-          const res = await fetch(`/api/budgets/user`);
-          if (res.ok) {
-            const data = await res.json();
-            setBudgets(data); 
-          } else {
-            console.error('Misslyckades att hämta budgetar');
-          }
-        } catch (error) {
-          console.error('Fel vid hämtning av budgetar:', error);
-        }
+      const res = await fetch("/api/budgets/user");
+      console.log("Fetch response status:", res.status);
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Fetched budgets:", data);
+        setBudgets(data);
+      } else {
+        console.error("Failed to fetch budgets");
       }
     };
-
-    if (status === 'authenticated') {
+  
+    if (session?.status === "authenticated") {
       fetchBudgets();
-    } else {
-      router.push('/');
     }
-  }, [status, router]);
+  }, [session]);
+  
 
   const handleBudgetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedBudget(e.target.value);
-    console.log("Selected budget ID:", e.target.value);
+  };
+
+  const handleContinue = () => {
+    console.log("Selected Budget:", selectedBudget);
+    if (selectedBudget) {
+      router.push(`/dashboard/budget/${selectedBudget}`);
+    }
+  };
+
+  const handleCreateBudget = () => {
+    router.push("/create-budget");
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-black justify-center items-center">
-      <div className="text-white">
-        <h1>Dashboard</h1>
-
-        {budgets.length > 0 && (
-          <div>
-            <h2>Välj budget</h2>
-            <select onChange={handleBudgetSelect} value={selectedBudget || ''}>
-              <option value='' disabled>Välj en budget</option>
-              {budgets.map(budget => (
-                <option key={budget._id} value={budget._id}>
-                  {budget.name} ({budget.amount})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
+    <div>
+      <h1>Dashboard</h1>
+      {budgets.length > 0 ? (
+        <>
+          <h2>Välj din budget</h2>
+          <select value={selectedBudget || ""} onChange={handleBudgetSelect}>
+            <option value="" disabled>Välj en budget</option>
+            {budgets.map((budget) => (
+              <option key={budget._id} value={budget._id}>
+                {budget.name} ({budget.amount} kr)
+              </option>
+            ))}
+          </select>
+          <button onClick={handleContinue}>Fortsätt</button>
+        </>
+      ) : (
+        <p>Inga budgetar hittades.</p>
+      )}
+      <button onClick={handleCreateBudget}>Skapa ny budget</button>
     </div>
   );
 };

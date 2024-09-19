@@ -22,36 +22,33 @@ export async function POST(request: Request) {
     let transaction;
 
     if (type === 'expense') {
-      
       transaction = new Expense({
         user: userId,
         budget: budgetId,
         category,
         amount,
         description,
+        type
       });
       await transaction.save();
-
-      
       await Budget.findByIdAndUpdate(budgetId, {
         $push: { expenses: transaction._id },
       });
     } else if (type === 'income') {
-      
       transaction = new Income({
         user: userId,
         budget: budgetId,
         source: category,
         amount,
         description,
+        type
       });
       await transaction.save();
-
-      
       await Budget.findByIdAndUpdate(budgetId, {
         $push: { incomes: transaction._id },
       });
     }
+    
 
     return NextResponse.json({ message: 'Transaction added successfully' }, { status: 201 });
   } catch (error) {
