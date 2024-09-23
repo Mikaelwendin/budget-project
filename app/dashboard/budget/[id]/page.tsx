@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 const BudgetPage = ({ params }: { params: { id: string } }) => {
-  const { id: budgetId } = params; 
+  const { id: budgetId } = params;
   const session = useSession();
   const router = useRouter();
   const [type, setType] = useState("");
@@ -12,6 +12,8 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
 
   useEffect(() => {
     if (session?.status !== "authenticated") {
@@ -19,50 +21,71 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
     }
   }, [session, router]);
 
-  const fetchBudgetWithTransactions = async () => {
+  const fetchBudgetWithTransactions = async (selectedYear: number, selectedMonth: number) => {
     try {
-      const res = await fetch(`/api/budgets/${budgetId}`);
+      const res = await fetch(`/api/budgets/month?year=${selectedYear}&month=${selectedMonth}`);
       if (res.ok) {
-        const data = await res.json();
-        console.log('Fetched budget data:', data);
-        setTransactions([...data.expenses, ...data.incomes]);
+        const budgetData = await res.json();
+        console.log('Fetched budget data:', budgetData);
+  
+        if (Array.isArray(budgetData) && budgetData.length > 0) {
+          const budget = budgetData[0]; 
+          const expenses = Array.isArray(budget.expenses) ? budget.expenses : [];
+          const incomes = Array.isArray(budget.incomes) ? budget.incomes : [];
+  
+          const formattedTransactions = [
+            ...expenses.map((expense: { [key: string]: any }) => ({
+              ...expense,
+              type: 'expense',
+            })),
+            ...incomes.map((income: { [key: string]: any }) => ({
+              ...income,
+              type: 'income',
+            })),
+          ];
+  
+          setTransactions(formattedTransactions);
+        } else {
+          setTransactions([]); 
+        }
       } else {
-        console.error("Misslyckades att hämta budget och transaktioner", budgetId);
+        console.error("Misslyckades att hämta budget och transaktioner");
       }
     } catch (error) {
       console.error("Fel vid hämtning av budget och transaktioner:", error);
     }
   };
+  
+  
+  
 
   useEffect(() => {
     if (budgetId) {
-      fetchBudgetWithTransactions();
+      fetchBudgetWithTransactions(year, month);
     }
-  }, [budgetId]);
+  }, [budgetId, year, month]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!type) {
-      console.error("Vänligen välj en typ.");
-      return;
-    }
-
-    const transactionData = { type, category, amount: parseFloat(amount), description, budgetId };
-
-    console.log('Submitting transaction data:', transactionData);
-
+    
+    const transactionData = {
+      type,
+      category,
+      amount: parseFloat(amount),
+      description,
+      budgetId,
+      month: `${year}-${String(month).padStart(2, '0')}`,
+    };
+  
     try {
       const res = await fetch(`/api/transactions`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(transactionData),
       });
-
+      
       if (res.ok) {
-        await fetchBudgetWithTransactions();
+        await fetchBudgetWithTransactions(year, month);
         setCategory("");
         setAmount("");
         setDescription("");
@@ -74,14 +97,26 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
       console.error("Fel vid skapande av transaktion:", error);
     }
   };
-
-  const handleEdit = async (transactionId: string) => {
-    console.log("Redigera transaktion med ID:", transactionId);
-  };
+  
 
   return (
     <div>
       <h1>Hantera Budget</h1>
+
+      {/* Månadsväljare */}
+      <label>Välj månad</label>
+      <input
+  type="month"
+  value={`${year}-${String(month).padStart(2, '0')}`}
+  onChange={async (e) => {
+    const [selectedYear, selectedMonth] = e.target.value.split("-");
+    setYear(parseInt(selectedYear));
+    setMonth(parseInt(selectedMonth));
+    await fetchBudgetWithTransactions(parseInt(selectedYear), parseInt(selectedMonth)); 
+  }}
+/>
+
+
       <form onSubmit={handleSubmit}>
         <div>
           <label>Typ</label>
@@ -120,24 +155,24 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
         <button type="submit">Lägg till transaktion</button>
       </form>
 
-      <h2>Nuvarande transaktioner</h2>
-      <ul>
-  {transactions.map((transaction) => {
-    console.log('Rendering transaction:', transaction);
-    const type = transaction.type;
-    return (
+      <h2>Nuvarande transaktioner för {year}-{month}</h2>
+{transactions.length > 0 ? (
+  <ul>
+    {transactions.map((transaction) => (
       <li key={transaction._id}>
-        <strong>{type === "expense" ? "Utgift" : "Inkomst"}:</strong> {transaction.category} - {transaction.amount} kr
-        <button onClick={() => handleEdit(transaction._id)}>Ändra</button>
+        <strong>{transaction.type === "expense" ? "Utgift" : "Inkomst"}:</strong> {transaction.category} - {transaction.amount} kr
       </li>
-    );
-  })}
-</ul>
+    ))}
+  </ul>
+) : (
+  <p>Inga transaktioner för denna månad.</p>
+)}
 
     </div>
   );
 };
 
 export default BudgetPage;
+
 
 

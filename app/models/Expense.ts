@@ -7,6 +7,7 @@ interface IExpense extends Document {
   amount: number;
   description?: string;
   date: Date;
+  month: string; 
   type: 'expense';
 }
 
@@ -17,11 +18,13 @@ const expenseSchema: Schema<IExpense> = new Schema({
   amount: { type: Number, required: true },
   description: { type: String },
   date: { type: Date, default: Date.now },
+  month: { type: String, required: true }, 
   type: { type: String, default: 'expense' }
 });
 
 const Expense: Model<IExpense> = mongoose.models.Expense || mongoose.model<IExpense>('Expense', expenseSchema);
 
 export default Expense;
+
 
 

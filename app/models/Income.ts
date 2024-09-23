@@ -7,6 +7,7 @@ interface IIncome extends Document {
   amount: number;
   description?: string;
   date: Date;
+  month: string;
   type: 'income';
 }
 
@@ -17,11 +18,13 @@ const incomeSchema: Schema<IIncome> = new Schema({
   amount: { type: Number, required: true },
   description: { type: String },
   date: { type: Date, default: Date.now },
+  month: { type: String, required: true },
   type: { type: String, default: 'income' }
 });
 
 const Income: Model<IIncome> = mongoose.models.Income || mongoose.model<IIncome>('Income', incomeSchema);
 
 export default Income;
+
 
 

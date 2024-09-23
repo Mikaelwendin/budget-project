@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -10,33 +9,30 @@ const Dashboard = () => {
   const router = useRouter();
   const [budgets, setBudgets] = useState<any[]>([]);
   const [selectedBudget, setSelectedBudget] = useState<string | null>(null);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth() + 1); // Standard till nuvarande månad
 
   useEffect(() => {
-    console.log("Session status:", session?.status);
     const fetchBudgets = async () => {
-      const res = await fetch("/api/budgets/user");
-      console.log("Fetch response status:", res.status);
-      if (res.ok) {
-        const data = await res.json();
-        console.log("Fetched budgets:", data);
-        setBudgets(data);
-      } else {
-        console.error("Failed to fetch budgets");
+      if (session?.status === "authenticated") {
+        const res = await fetch(`/api/budgets/user?year=${year}&month=${month}`);
+        if (res.ok) {
+          const data = await res.json();
+          setBudgets(data);
+        } else {
+          console.error("Failed to fetch budgets");
+        }
       }
     };
-  
-    if (session?.status === "authenticated") {
-      fetchBudgets();
-    }
-  }, [session]);
-  
+
+    fetchBudgets();
+  }, [session, year, month]);
 
   const handleBudgetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedBudget(e.target.value);
   };
 
   const handleContinue = () => {
-    console.log("Selected Budget:", selectedBudget);
     if (selectedBudget) {
       router.push(`/dashboard/budget/${selectedBudget}`);
     }
@@ -49,6 +45,20 @@ const Dashboard = () => {
   return (
     <div>
       <h1>Dashboard</h1>
+
+      {/* Välj månad */}
+      <label>Välj månad</label>
+      <input
+        type="month"
+        value={`${year}-${String(month).padStart(2, '0')}`}
+        onChange={(e) => {
+          const [selectedYear, selectedMonth] = e.target.value.split("-");
+          setYear(parseInt(selectedYear));
+          setMonth(parseInt(selectedMonth));
+        }}
+      />
+
+      {/* Välj budget för den valda månaden */}
       {budgets.length > 0 ? (
         <>
           <h2>Välj din budget</h2>
@@ -63,12 +73,14 @@ const Dashboard = () => {
           <button onClick={handleContinue}>Fortsätt</button>
         </>
       ) : (
-        <p>Inga budgetar hittades.</p>
+        <p>Inga budgetar hittades för den valda månaden.</p>
       )}
+      
       <button onClick={handleCreateBudget}>Skapa ny budget</button>
     </div>
   );
 };
 
 export default Dashboard;
+
 

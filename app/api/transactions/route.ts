@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
   await dbConnect();
 
-  const { type, category, amount, description, budgetId } = await request.json();
+  const { type, category, amount, description, budgetId, month } = await request.json();
 
   try {
     const userId = session.user.id;
@@ -28,7 +28,8 @@ export async function POST(request: Request) {
         category,
         amount,
         description,
-        type
+        month,
+        type,
       });
       await transaction.save();
       await Budget.findByIdAndUpdate(budgetId, {
@@ -41,14 +42,14 @@ export async function POST(request: Request) {
         source: category,
         amount,
         description,
-        type
+        month,
+        type,
       });
       await transaction.save();
       await Budget.findByIdAndUpdate(budgetId, {
         $push: { incomes: transaction._id },
       });
     }
-    
 
     return NextResponse.json({ message: 'Transaction added successfully' }, { status: 201 });
   } catch (error) {
@@ -56,3 +57,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Error adding transaction' }, { status: 500 });
   }
 }
+

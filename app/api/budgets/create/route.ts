@@ -1,41 +1,34 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import dbConnect from '../../../utils/db';
-import { Types } from 'mongoose';
-import { authOptions } from '../../auth/[...nextauth]/route'; 
-import User from '@/app/models/User';
 import Budget from '@/app/models/Budget';
+import { authOptions } from '../../auth/[...nextauth]/route';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  if (!session || !session.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   await dbConnect();
 
-  const { name, amount } = await request.json();
-
   try {
-    const user = await User.findOne({ email: session.user?.email });
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const { name, amount, month } = await request.json();
+    const userId = session.user.id;
 
-    const budget = new Budget({
+    const newBudget = new Budget({
       name,
+      user: userId,
       amount,
-      user: user._id as Types.ObjectId,
+      month: new Date(month),
     });
 
-    await budget.save();
-
-    user.budgets.push(budget._id as Types.ObjectId);
-    await user.save();
-
-    return NextResponse.json(budget, { status: 201 });
+    await newBudget.save();
+    return NextResponse.json({ message: 'Budget created successfully' }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    console.error('Error creating budget:', error);
+    return NextResponse.json({ error: 'Error creating budget' }, { status: 500 });
   }
 }
+
 
