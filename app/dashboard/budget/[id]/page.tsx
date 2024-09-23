@@ -23,38 +23,29 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
 
   const fetchBudgetWithTransactions = async (selectedYear: number, selectedMonth: number) => {
     try {
-      const res = await fetch(`/api/budgets/month?year=${selectedYear}&month=${selectedMonth}`);
+      const res = await fetch(`/api/transactions/month?budgetId=${budgetId}&year=${selectedYear}&month=${selectedMonth}`);
       if (res.ok) {
-        const budgetData = await res.json();
-        console.log('Fetched budget data:', budgetData);
+        const data = await res.json();
+        
+        
+        const expenses = Array.isArray(data.expenses) ? data.expenses : [];
+        const incomes = Array.isArray(data.incomes) ? data.incomes : [];
   
-        if (Array.isArray(budgetData) && budgetData.length > 0) {
-          const budget = budgetData[0]; 
-          const expenses = Array.isArray(budget.expenses) ? budget.expenses : [];
-          const incomes = Array.isArray(budget.incomes) ? budget.incomes : [];
+        const formattedTransactions = [
+          ...expenses.map((expense: any) => ({ ...expense, type: 'expense' })),
+          ...incomes.map((income: any) => ({ ...income, type: 'income' })),
+        ];
   
-          const formattedTransactions = [
-            ...expenses.map((expense: { [key: string]: any }) => ({
-              ...expense,
-              type: 'expense',
-            })),
-            ...incomes.map((income: { [key: string]: any }) => ({
-              ...income,
-              type: 'income',
-            })),
-          ];
-  
-          setTransactions(formattedTransactions);
-        } else {
-          setTransactions([]); 
-        }
+        setTransactions(formattedTransactions);
       } else {
-        console.error("Misslyckades att hämta budget och transaktioner");
+        console.error("Misslyckades att hämta transaktioner");
       }
     } catch (error) {
-      console.error("Fel vid hämtning av budget och transaktioner:", error);
+      console.error("Fel vid hämtning av transaktioner:", error);
+      setTransactions([]);
     }
   };
+  
   
   
   

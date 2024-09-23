@@ -10,7 +10,7 @@ const Dashboard = () => {
   const [budgets, setBudgets] = useState<any[]>([]);
   const [selectedBudget, setSelectedBudget] = useState<string | null>(null);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth() + 1); // Standard till nuvarande månad
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
 
   useEffect(() => {
     const fetchBudgets = async () => {
