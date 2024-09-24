@@ -21,15 +21,57 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
     }
   }, [session, router]);
 
+  const deleteTransaction = async (transactionId: string, type: 'expense' | 'income') => {
+    try {
+      const res = await fetch(`/api/transactions/delete?transactionId=${transactionId}&type=${type}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        console.log('Transaction deleted');
+        await fetchBudgetWithTransactions(year, month);
+      } else {
+        console.error('Failed to delete transaction');
+      }
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+    }
+  };
+  
+
+  const updateTransaction = async (transactionId: string, type: 'expense' | 'income', updatedData: any) => {
+    try {
+      const res = await fetch(`/api/transactions/modify?transactionId=${transactionId}&type=${type}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
+      if (res.ok) {
+        const updatedTransaction = await res.json();
+        console.log('Transaction updated:', updatedTransaction);
+        await fetchBudgetWithTransactions(year, month); 
+      } else {
+        console.error('Failed to update transaction');
+      }
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+    }
+  };
+  
+  
+
   const fetchBudgetWithTransactions = async (selectedYear: number, selectedMonth: number) => {
     try {
       const res = await fetch(`/api/transactions/month?budgetId=${budgetId}&year=${selectedYear}&month=${selectedMonth}`);
       if (res.ok) {
         const data = await res.json();
-        
+  
         
         const expenses = Array.isArray(data.expenses) ? data.expenses : [];
         const incomes = Array.isArray(data.incomes) ? data.incomes : [];
+  
+        if (expenses.length === 0 && incomes.length === 0) {
+          console.log("Inga transaktioner för denna månad");
+        }
   
         const formattedTransactions = [
           ...expenses.map((expense: any) => ({ ...expense, type: 'expense' })),
@@ -38,13 +80,15 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
   
         setTransactions(formattedTransactions);
       } else {
-        console.error("Misslyckades att hämta transaktioner");
+        console.warn("Misslyckades att hämta transaktioner");
+        setTransactions([]);
       }
     } catch (error) {
       console.error("Fel vid hämtning av transaktioner:", error);
       setTransactions([]);
     }
   };
+  
   
   
   
@@ -56,38 +100,53 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
     }
   }, [budgetId, year, month]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const transactionData = {
-      type,
-      category,
-      amount: parseFloat(amount),
-      description,
-      budgetId,
-      month: `${year}-${String(month).padStart(2, '0')}`,
-    };
-  
-    try {
+  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  const transactionData = {
+    type,
+    category,
+    amount: parseFloat(amount),
+    description,
+    budgetId,
+    month: `${year}-${String(month).padStart(2, '0')}`,
+  };
+
+  try {
+    if (editingTransactionId) {
+      
+      if (type === 'expense' || type === 'income') {
+        await updateTransaction(editingTransactionId, type, transactionData);
+      } else {
+        console.error("Invalid transaction type");
+      }
+    } else {
+      
       const res = await fetch(`/api/transactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(transactionData),
       });
-      
-      if (res.ok) {
-        await fetchBudgetWithTransactions(year, month);
-        setCategory("");
-        setAmount("");
-        setDescription("");
-        setType("");
-      } else {
+
+      if (!res.ok) {
         console.error("Misslyckades att skapa transaktion");
+        return;
       }
-    } catch (error) {
-      console.error("Fel vid skapande av transaktion:", error);
     }
-  };
+
+    await fetchBudgetWithTransactions(year, month);
+    setCategory("");
+    setAmount("");
+    setDescription("");
+    setType("");
+    setEditingTransactionId(null);
+  } catch (error) {
+    console.error("Fel vid skapande/uppdatering av transaktion:", error);
+  }
+};
+
   
 
   return (
@@ -121,7 +180,7 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
           <label>Kategori</label>
           <input
             type="text"
-            value={category}
+            value={category || ""}
             onChange={(e) => setCategory(e.target.value)}
             required
           />
@@ -130,7 +189,7 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
           <label>Belopp</label>
           <input
             type="number"
-            value={amount}
+            value={amount || ""}
             onChange={(e) => setAmount(e.target.value)}
             required
           />
@@ -139,7 +198,7 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
           <label>Beskrivning</label>
           <input
             type="text"
-            value={description}
+            value={description || ""}
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
@@ -147,17 +206,36 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
       </form>
 
       <h2>Nuvarande transaktioner för {year}-{month}</h2>
-{transactions.length > 0 ? (
+      {transactions.length > 0 ? (
   <ul>
     {transactions.map((transaction) => (
       <li key={transaction._id}>
         <strong>{transaction.type === "expense" ? "Utgift" : "Inkomst"}:</strong> {transaction.category} - {transaction.amount} kr
+        <button
+          onClick={() => deleteTransaction(transaction._id, transaction.type)}
+          style={{ marginLeft: "10px", color: "red" }}
+        >
+          Ta bort
+        </button>
+        <button
+          onClick={() => {
+            setType(transaction.type);
+            setCategory(transaction.category);
+            setAmount(transaction.amount.toString());
+            setDescription(transaction.description || "");
+            setEditingTransactionId(transaction._id);
+          }}
+          style={{ marginLeft: "10px", color: "blue" }}
+        >
+          Redigera
+        </button>
       </li>
     ))}
   </ul>
 ) : (
   <p>Inga transaktioner för denna månad.</p>
 )}
+
 
     </div>
   );
