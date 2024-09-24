@@ -59,7 +59,7 @@ const Register = () => {
                 setIsError(false);
                 setMessage("Registration successful! Redirecting...");
                 setTimeout(() => {
-                    router.push("/dashboard");
+                    router.push("/login");
                 }, 2000);
             }
         } catch (error) {
