@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { deleteBudget, fetchBudgets } from "../utils/budgetUtils";
+
 
 const Dashboard = () => {
   const session = useSession();
@@ -13,19 +15,14 @@ const Dashboard = () => {
   const [month, setMonth] = useState(new Date().getMonth() + 1);
 
   useEffect(() => {
-    const fetchBudgets = async () => {
+    const loadBudgets = async () => {
       if (session?.status === "authenticated") {
-        const res = await fetch(`/api/budgets/user?year=${year}&month=${month}`);
-        if (res.ok) {
-          const data = await res.json();
-          setBudgets(data);
-        } else {
-          console.error("Failed to fetch budgets");
-        }
+        const data = await fetchBudgets(year, month);
+        setBudgets(data);
       }
     };
 
-    fetchBudgets();
+    loadBudgets();
   }, [session, year, month]);
 
   const handleBudgetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -47,29 +44,17 @@ const Dashboard = () => {
       alert("Vänligen välj en budget att ta bort.");
       return;
     }
-  
+
     const confirmDelete = confirm("Är du säker på att du vill ta bort denna budget?");
     if (!confirmDelete) return;
-  
-    try {
-      const res = await fetch(`/api/budgets/${selectedBudget}`, {
-        method: "DELETE",
-      });
-  
-      if (res.ok) {
-        setBudgets((prev) => prev.filter((budget) => budget._id !== selectedBudget));
-        setSelectedBudget(null);
-        alert("Budget raderad!");
-      } else {
-        const data = await res.json();
-        alert(`Misslyckades med att ta bort budget: ${data.error || "Okänt fel"}`);
-        console.error("Failed to delete budget:", data.error);
-      }
-    } catch (error) {
-      console.error("Error deleting budget:", error);
+
+    const success = await deleteBudget(selectedBudget);
+    if (success) {
+      setBudgets((prev) => prev.filter((budget) => budget._id !== selectedBudget));
+      setSelectedBudget(null);
+      alert("Budget raderad!");
     }
   };
-  
 
   return (
     <div>
@@ -79,7 +64,7 @@ const Dashboard = () => {
       <label>Välj månad</label>
       <input
         type="month"
-        value={`${year}-${String(month).padStart(2, '0')}`}
+        value={`${year}-${String(month).padStart(2, "0")}`}
         onChange={(e) => {
           const [selectedYear, selectedMonth] = e.target.value.split("-");
           setYear(parseInt(selectedYear));
@@ -112,3 +97,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
