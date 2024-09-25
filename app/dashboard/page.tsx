@@ -42,6 +42,35 @@ const Dashboard = () => {
     router.push("/create-budget");
   };
 
+  const handleDeleteBudget = async () => {
+    if (!selectedBudget) {
+      alert("Vänligen välj en budget att ta bort.");
+      return;
+    }
+  
+    const confirmDelete = confirm("Är du säker på att du vill ta bort denna budget?");
+    if (!confirmDelete) return;
+  
+    try {
+      const res = await fetch(`/api/budgets/${selectedBudget}`, {
+        method: "DELETE",
+      });
+  
+      if (res.ok) {
+        setBudgets((prev) => prev.filter((budget) => budget._id !== selectedBudget));
+        setSelectedBudget(null);
+        alert("Budget raderad!");
+      } else {
+        const data = await res.json();
+        alert(`Misslyckades med att ta bort budget: ${data.error || "Okänt fel"}`);
+        console.error("Failed to delete budget:", data.error);
+      }
+    } catch (error) {
+      console.error("Error deleting budget:", error);
+    }
+  };
+  
+
   return (
     <div>
       <h1>Dashboard</h1>
@@ -71,16 +100,15 @@ const Dashboard = () => {
             ))}
           </select>
           <button onClick={handleContinue}>Fortsätt</button>
+          <button onClick={handleDeleteBudget}>Ta bort</button>
         </>
       ) : (
         <p>Inga budgetar hittades för den valda månaden.</p>
       )}
-      
+
       <button onClick={handleCreateBudget}>Skapa ny budget</button>
     </div>
   );
 };
 
 export default Dashboard;
-
-
