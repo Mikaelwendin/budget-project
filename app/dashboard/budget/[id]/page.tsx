@@ -14,6 +14,7 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [balance, setBalance] = useState(0);
 
   useEffect(() => {
     if (session?.status !== "authenticated") {
@@ -65,7 +66,6 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
       if (res.ok) {
         const data = await res.json();
   
-        
         const expenses = Array.isArray(data.expenses) ? data.expenses : [];
         const incomes = Array.isArray(data.incomes) ? data.incomes : [];
   
@@ -79,15 +79,24 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
         ];
   
         setTransactions(formattedTransactions);
+  
+        if (data.balance !== undefined) {
+          setBalance(data.balance); 
+        } else {
+          setBalance(0);
+        }
       } else {
         console.warn("Misslyckades att hämta transaktioner");
         setTransactions([]);
+        setBalance(0);
       }
     } catch (error) {
       console.error("Fel vid hämtning av transaktioner:", error);
       setTransactions([]);
+      setBalance(0);
     }
   };
+  
   
   
   
@@ -231,6 +240,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         </button>
       </li>
     ))}
+    <h2>Total balans: {balance} kr</h2>
   </ul>
 ) : (
   <p>Inga transaktioner för denna månad.</p>

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'; 
 import dbConnect from '../../../utils/db';
 import Expense from '@/app/models/Expense';
 import Income from '@/app/models/Income';
@@ -10,7 +10,6 @@ export async function GET(request: Request) {
   const year = parseInt(searchParams.get('year') as string);
   const month = parseInt(searchParams.get('month') as string);
 
- 
   if (!budgetId || isNaN(year) || isNaN(month)) {
     return NextResponse.json({ error: 'Invalid query parameters' }, { status: 400 });
   }
@@ -18,7 +17,6 @@ export async function GET(request: Request) {
   await dbConnect();
 
   try {
-    
     const budget = await Budget.findById(budgetId)
       .populate('expenses')
       .populate('incomes');
@@ -26,8 +24,6 @@ export async function GET(request: Request) {
     if (!budget) {
       return NextResponse.json({ error: 'Budget not found' }, { status: 404 });
     }
-
-    
     const filteredExpenses = budget.expenses?.filter((expense: any) => {
       const expenseDate = new Date(expense.month);
       return expenseDate.getFullYear() === year && expenseDate.getMonth() === month - 1;
@@ -37,15 +33,19 @@ export async function GET(request: Request) {
       const incomeDate = new Date(income.month);
       return incomeDate.getFullYear() === year && incomeDate.getMonth() === month - 1;
     }) || [];
+    const totalExpenses = filteredExpenses.reduce((sum, expense: any) => sum + expense.amount, 0);
+    const totalIncomes = filteredIncomes.reduce((sum, income: any) => sum + income.amount, 0);
+    const balance = totalIncomes - totalExpenses;
 
-    
     return NextResponse.json({
       expenses: filteredExpenses.length ? filteredExpenses : [],
       incomes: filteredIncomes.length ? filteredIncomes : [],
+      balance,
     });
   } catch (error) {
     console.error('Error fetching transactions:', error);
     return NextResponse.json({ error: 'Error fetching transactions' }, { status: 500 });
   }
 }
+
 
