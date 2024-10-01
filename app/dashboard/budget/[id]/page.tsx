@@ -96,12 +96,6 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
       setBalance(0);
     }
   };
-  
-  
-  
-  
-  
-  
 
   useEffect(() => {
     if (budgetId) {
@@ -176,43 +170,74 @@ const handleSubmit = async (e: React.FormEvent) => {
 />
 
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Typ</label>
-          <select value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="" disabled>Välj typ</option>
-            <option value="expense">Utgift</option>
-            <option value="income">Inkomst</option>
-          </select>
-        </div>
-        <div>
-          <label>Kategori</label>
-          <input
-            type="text"
-            value={category || ""}
-            onChange={(e) => setCategory(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Belopp</label>
-          <input
-            type="number"
-            value={amount || ""}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Beskrivning</label>
-          <input
-            type="text"
-            value={description || ""}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-        <button type="submit">Lägg till transaktion</button>
-      </form>
+<form onSubmit={handleSubmit}>
+  <div>
+    <label>Typ</label>
+    <select value={type} onChange={(e) => setType(e.target.value)}>
+      <option value="" disabled>Välj typ</option>
+      <option value="expense">Utgift</option>
+      <option value="income">Inkomst</option>
+    </select>
+  </div>
+  
+  <div>
+    <label>Kategori</label>
+    <select value={category} onChange={(e) => setCategory(e.target.value)}
+      disabled={!type}>
+      
+      <option value="" disabled>Välj kategori</option>
+      {
+        type === 'expense' 
+        ? (
+          <>
+            <option value="Hyra/Bostad">Hyra/Bostad</option>
+            <option value="Mat">Mat</option>
+            <option value="Transport">Transport</option>
+            <option value="Underhållning">Underhållning</option>
+            <option value="Hälsa">Hälsa</option>
+            <option value="Försäkringar">Försäkringar</option>
+            <option value="Sparande/Investeringar">Sparande/Investeringar</option>
+            <option value="Kläder och skönhet">Kläder och skönhet</option>
+            <option value="Barn och familj">Barn och familj</option>
+            <option value="Övrigt">Övrigt</option>
+          </>
+        ) 
+        : (
+          <>
+            <option value="Lön">Lön</option>
+            <option value="Bonus/Provision">Bonus/Provision</option>
+            <option value="Bidrag">Bidrag</option>
+            <option value="Sparande/Utdelning">Sparande/Utdelning</option>
+            <option value="Försäljning">Försäljning</option>
+            <option value="Övrigt">Övrigt</option>
+          </>
+        )
+      }
+    </select>
+  </div>
+  
+  <div>
+    <label>Belopp</label>
+    <input
+      type="number"
+      value={amount || ""}
+      onChange={(e) => setAmount(e.target.value)}
+      required
+    />
+  </div>
+  
+  <div>
+    <label>Beskrivning</label>
+    <input
+      type="text"
+      value={description || ""}
+      onChange={(e) => setDescription(e.target.value)}
+    />
+  </div>
+  
+  <button type="submit">Lägg till transaktion</button>
+</form>
+
 
       <h2>Nuvarande transaktioner för {year}-{month}</h2>
       {transactions.length > 0 ? (
