@@ -15,7 +15,6 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [balance, setBalance] = useState(0);
-  const [isRecurring, setIsRecurring] = useState(false);
 
   useEffect(() => {
     if (session?.status !== "authenticated") {
@@ -113,7 +112,6 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
       description,
       budgetId,
       month: `${year}-${String(month).padStart(2, '0')}`,
-      isRecurring
     };
 
     try {
@@ -142,7 +140,6 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
       setDescription("");
       setType("");
       setEditingTransactionId(null);
-      setIsRecurring(false);
     } catch (error) {
       console.error("Fel vid skapande/uppdatering av transaktion:", error);
     }
@@ -229,14 +226,6 @@ const BudgetPage = ({ params }: { params: { id: string } }) => {
         </div>
 
         <div>
-          <label>
-            <input
-              type="checkbox"
-              checked={isRecurring}
-              onChange={() => setIsRecurring(!isRecurring)}
-            />
-            Återkommande
-          </label>
         </div>
 
         <button type="submit">Lägg till transaktion</button>
